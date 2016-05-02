@@ -9,6 +9,8 @@
         <!-- Fonts -->
         <link href="https://fonts.googleapis.com/css?family=Courgette|Raleway:400,200,700" rel="stylesheet" type="text/css">
 
+        <script src="https://cdn.jsdelivr.net/jquery/3.0.0-beta1/jquery.min.js"></script>
+
         <link rel="stylesheet" type="text/css" href="../css/default.css" />
     </head>
     <body>
@@ -64,72 +66,59 @@
     
 </div>
 
-<p>
-There are a myriad of measures to reduce loading time of websites and improve user experience, the most effective of which are probably caching and compression. ETags, or entity tags, are a powerful tool to improve client-side caching of web resources. Generally implemented using inode information or quick hashes, they uniquely represent a file served and should always change as long as the file is modified. It is a superior approach compared to Last-Modified header, which may be susceptible to a number of timing issues including slight out-of-sync between different server clocks, thus making ETags suitable for files that are subject to rapid changes. Compression on the other hand is typically performed on-the-fly using algorithms such as gzip. When I applied the two simultaneously, however, the ETag header was missing in the response:<!--more-->
-</p>
-<pre class="lang:default decode:true">http {
+<p>There are a myriad of measures to reduce loading time of websites and improve user experience, the most effective of which are probably caching and compression. ETags, or entity tags, are a powerful tool to improve client-side caching of web resources. Generally implemented using inode information or quick hashes, they uniquely represent a file served and should always change as long as the file is modified. It is a superior approach compared to Last-Modified header, which may be susceptible to a number of timing issues including slight out-of-sync between different server clocks, thus making ETags suitable for files that are subject to rapid changes. Compression on the other hand is typically performed on-the-fly using algorithms such as gzip. When I applied the two simultaneously, however, the ETag header was missing in the response:</p>
+<pre><code>http {
     location (some_parameter) {
         gzip on;
         etag on;
     }
-}</pre>
-<p>[caption id=“” align=“alignleft” width=“342”]<img src="https://static.thinkingandcomputing.com/2014/09/response.png" alt="Response header" width="342" height="171" /> Response header[/caption]</p>
-<p>
-No ETag in response header!
-</p>
-<p>
-The issue was discussed over several <a href="http://forum.nginx.org/read.php?2,240120,240127" target="_blank">forum threads</a> and <a href="http://code.google.com/p/phusion-passenger/issues/detail?id=903" target="_blank">trackers</a>. It appeared that Nginx deliberately strips ETags once gzip is applied, The motivation behind was that ETag should serve as a byte-accurate comparison, and since the result of gzip is not guaranteed to be identical under different configurations, ETag is no longer a strong validator and Nginx decided that it was simpler to remove it as opposed to converting it to a weak one.
-</p>
-<p>
-Fortunately, there is still a way to get ETag back, at least for static resources. By compiling Nginx with the <span class="inlinecode">–with-http_gzip_static_module</span> parameter, support for a new directive, <span class="inlinecode">gzip_static</span>, is added. The http gzip static module lets Nginx check if there is a pre-compressed version of a file available before serving it using on-the-fly compression. The primary objective is to save processing time, but a interesting side effect is that it leaves ETag intact.
-</p>
-<p>
-The problem with this approach though, is that the compressed version has to be there for the whole thing to work. Otherwise Nginx will fallback to plain old gzip and not preservce eTags. A slapdash solution would be to write a script iterating through all the static resources and call tar on every one of them. For large projects with innumerable files, however, this turns into a kludge. Compressing all the files at each iteration leads to too much redundant work, and while manually keeping track of file modification time is feasible, it is hard to integrate with existing build process. I recommend using a task runner, <a href="http://gruntjs.com/" target="_blank">Grunt</a>, to handle the automatic compression. Here is my example Gruntfile:
-</p>
-<pre class="lang:default decode:true">module.exports = function(grunt) {
+}</code></pre>
+<p><img src="https://static.thinkingandcomputing.com/2014/09/response.png" alt="Response header" /> Response header</p>
+<p>No ETag in response header!</p>
+<p>The issue was discussed over several <a href="http://forum.nginx.org/read.php?2,240120,240127">forum threads</a> and <a href="http://code.google.com/p/phusion-passenger/issues/detail?id=903">trackers</a>. It appeared that Nginx deliberately strips ETags once gzip is applied, The motivation behind was that ETag should serve as a byte-accurate comparison, and since the result of gzip is not guaranteed to be identical under different configurations, ETag is no longer a strong validator and Nginx decided that it was simpler to remove it as opposed to converting it to a weak one.</p>
+<p>Fortunately, there is still a way to get ETag back, at least for static resources. By compiling Nginx with the <code>--with-http_gzip_static_module</code> parameter, support for a new directive, <code>gzip_static</code>, is added. The http gzip static module lets Nginx check if there is a pre-compressed version of a file available before serving it using on-the-fly compression. The primary objective is to save processing time, but a interesting side effect is that it leaves ETag intact.</p>
+<p>The problem with this approach though, is that the compressed version has to be there for the whole thing to work. Otherwise Nginx will fallback to plain old gzip and not preservce eTags. A slapdash solution would be to write a script iterating through all the static resources and call tar on every one of them. For large projects with innumerable files, however, this turns into a kludge. Compressing all the files at each iteration leads to too much redundant work, and while manually keeping track of file modification time is feasible, it is hard to integrate with existing build process. I recommend using a task runner, <a href="http://gruntjs.com/">Grunt</a>, to handle the automatic compression. Here is my example Gruntfile:</p>
+<div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="va">module</span>.<span class="at">exports</span> <span class="op">=</span> <span class="kw">function</span>(grunt) <span class="op">{</span>
 
-  grunt.loadNpmTasks('grunt-contrib-compress');
-  grunt.loadNpmTasks('grunt-contrib-copy');
-  grunt.loadNpmTasks('grunt-newer');
-  
-  // Project configuration.
-  grunt.initConfig({
-    pkg: grunt.file.readJSON('package.json'),
-	copy: {
-      main: {
-        expand: true,
-		cwd: 'www/',
-		// source directory and exclusion
-        src: ['**', '!**/_notes/**'],
-        dest: 'build/'
-      }
-    },
-    compress: {
-      main: {
-        options: {
-          mode: 'gzip',
-		  level: 9
-        },
-        files: [
-          // Each of the files in the src/ folder will be output to
-          // the dist/ folder each with the extension .gz.js
-          {expand: true, src: ['build/**/*.css'], dest: '', ext: '.css.gz', extDot: 'last'},
-		  {expand: true, src: ['build/**/*.html'], dest: '', ext: '.html.gz', extDot: 'last'},
-		  {expand: true, src: ['build/**/*.js'], dest: '', ext: '.js.gz', extDot: 'last'},
-		  {expand: true, src: ['build/**/*.htc'], dest: '', ext: '.htc.gz', extDot: 'last'}
+  <span class="va">grunt</span>.<span class="at">loadNpmTasks</span>(<span class="st">'grunt-contrib-compress'</span>)<span class="op">;</span>
+  <span class="va">grunt</span>.<span class="at">loadNpmTasks</span>(<span class="st">'grunt-contrib-copy'</span>)<span class="op">;</span>
+  <span class="va">grunt</span>.<span class="at">loadNpmTasks</span>(<span class="st">'grunt-newer'</span>)<span class="op">;</span>
+
+  <span class="co">// Project configuration.</span>
+  <span class="va">grunt</span>.<span class="at">initConfig</span>(<span class="op">{</span>
+    <span class="dt">pkg</span><span class="op">:</span> <span class="va">grunt</span>.<span class="va">file</span>.<span class="at">readJSON</span>(<span class="st">'package.json'</span>)<span class="op">,</span>
+	<span class="dt">copy</span><span class="op">:</span> <span class="op">{</span>
+      <span class="dt">main</span><span class="op">:</span> <span class="op">{</span>
+        <span class="dt">expand</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span>
+		<span class="dt">cwd</span><span class="op">:</span> <span class="st">'www/'</span><span class="op">,</span>
+		<span class="co">// source directory and exclusion</span>
+        <span class="dt">src</span><span class="op">:</span> [<span class="st">'**'</span><span class="op">,</span> <span class="st">'!**/_notes/**'</span>]<span class="op">,</span>
+        <span class="dt">dest</span><span class="op">:</span> <span class="st">'build/'</span>
+      <span class="op">}</span>
+    <span class="op">},</span>
+    <span class="dt">compress</span><span class="op">:</span> <span class="op">{</span>
+      <span class="dt">main</span><span class="op">:</span> <span class="op">{</span>
+        <span class="dt">options</span><span class="op">:</span> <span class="op">{</span>
+          <span class="dt">mode</span><span class="op">:</span> <span class="st">'gzip'</span><span class="op">,</span>
+		  <span class="dt">level</span><span class="op">:</span> <span class="dv">9</span>
+        <span class="op">},</span>
+        <span class="dt">files</span><span class="op">:</span> [
+          <span class="co">// Each of the files in the src/ folder will be output to</span>
+          <span class="co">// the dist/ folder each with the extension .gz.js</span>
+          <span class="op">{</span><span class="dt">expand</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="dt">src</span><span class="op">:</span> [<span class="st">'build/**/*.css'</span>]<span class="op">,</span> <span class="dt">dest</span><span class="op">:</span> <span class="st">''</span><span class="op">,</span> <span class="dt">ext</span><span class="op">:</span> <span class="st">'.css.gz'</span><span class="op">,</span> <span class="dt">extDot</span><span class="op">:</span> <span class="st">'last'</span><span class="op">},</span>
+		  <span class="op">{</span><span class="dt">expand</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="dt">src</span><span class="op">:</span> [<span class="st">'build/**/*.html'</span>]<span class="op">,</span> <span class="dt">dest</span><span class="op">:</span> <span class="st">''</span><span class="op">,</span> <span class="dt">ext</span><span class="op">:</span> <span class="st">'.html.gz'</span><span class="op">,</span> <span class="dt">extDot</span><span class="op">:</span> <span class="st">'last'</span><span class="op">},</span>
+		  <span class="op">{</span><span class="dt">expand</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="dt">src</span><span class="op">:</span> [<span class="st">'build/**/*.js'</span>]<span class="op">,</span> <span class="dt">dest</span><span class="op">:</span> <span class="st">''</span><span class="op">,</span> <span class="dt">ext</span><span class="op">:</span> <span class="st">'.js.gz'</span><span class="op">,</span> <span class="dt">extDot</span><span class="op">:</span> <span class="st">'last'</span><span class="op">},</span>
+		  <span class="op">{</span><span class="dt">expand</span><span class="op">:</span> <span class="kw">true</span><span class="op">,</span> <span class="dt">src</span><span class="op">:</span> [<span class="st">'build/**/*.htc'</span>]<span class="op">,</span> <span class="dt">dest</span><span class="op">:</span> <span class="st">''</span><span class="op">,</span> <span class="dt">ext</span><span class="op">:</span> <span class="st">'.htc.gz'</span><span class="op">,</span> <span class="dt">extDot</span><span class="op">:</span> <span class="st">'last'</span><span class="op">}</span>
         ]
-      }
-    }
-  });
+      <span class="op">}</span>
+    <span class="op">}</span>
+  <span class="op">}</span>)<span class="op">;</span>
 
-  // Task(s).
-  grunt.registerTask('default', ['newer:copy:main', 'newer:compress']);
+  <span class="co">// Task(s).</span>
+  <span class="va">grunt</span>.<span class="at">registerTask</span>(<span class="st">'default'</span><span class="op">,</span> [<span class="st">'newer:copy:main'</span><span class="op">,</span> <span class="st">'newer:compress'</span>])<span class="op">;</span>
 
-};
-</pre>
-<p>
-The config instructs Grunt to copy all newer contents from www, the development folder, to build, the local testing/deployment folder, and do compression at the “build” directory. The Grunt module named “newer” is required.
-</p>
+<span class="op">};</span></code></pre></div>
+<p>The config instructs Grunt to copy all newer contents from www, the development folder, to build, the local testing/deployment folder, and do compression at the “build” directory. The Grunt module named “newer” is required.</p>
 
               </div>
             </div>
