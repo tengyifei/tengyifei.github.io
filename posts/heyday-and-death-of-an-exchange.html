@@ -33,7 +33,7 @@
 })();
 </script>
 
-        <div class="tnc-main tnc-layout mdl-layout mdl-js-layout">
+        <div id="tnc-page" class="tnc-main tnc-layout mdl-layout mdl-js-layout">
           <header class="mdl-layout__header mdl-layout__header--transparent mdl-layout__header--scroll">
             <!-- Top row, always visible -->
             <div class="mdl-layout__header-row">
@@ -49,7 +49,7 @@
               </nav>
             </div>
           </header>
-          <div class="mdl-layout__drawer">
+          <div class="mdl-layout__drawer" style="z-index: 200000;">
             <span class="mdl-layout-title">Browse T&amp;C</span>
             <nav class="mdl-navigation">
               <a class="mdl-navigation__link" href="../">Home</a>
@@ -175,10 +175,42 @@ Loading chart data…
 </div>
 </div>
 <p>The gradual but inevitable disappearance of Mt. Gox can be clearly seen from the volume charts. What used to be the monopolizing party in Bitcoin transaction ended in a wave of panic selling and endless civil lawsuit. By February, Mt. Gox was already operating beyond its limits. As rumors regarding possible insolvency spread, users started to frantically sell Bitcoin to save their investment, causing its price to plunge. This quickly escalated into a vicious cycle as other users, upon witnessing the price drop coupled with low credibility of Mt. Gox, expected it to close down, which prompted more selling. Within days the price of Bitcoin fell to barely $100, while on other exchanges prices were still fluctuating around $600. Unable to sustain the unprecedented withdrawal, Mt. Gox was forced to shut down its website, hours after the final price dip.</p>
-<p>[<img src="//static.thinkingandcomputing.com/2014/04/goxchart_s.png" alt="Price drops to $100 in 15 days" /></p>
-<p>Hyperdeflation</p>
+<p>[<img src="//static.thinkingandcomputing.com/2014/04/goxchart_s.png" alt="Price drops to $100 in 15 days" /> <tnc-caption>Hyperdeflation</tnc-caption></p>
 <p>However, long before its demise, Mt. Gox had been losing customers steadily. This can be primarily attributed to poor management, loose security measures and rough relationships with banks providing fiat currency withdrawal.</p>
 <p>Graph generated using data from <a href="http://bitcoincharts.com/">bitcoincharts.com</a></p>
+
+<div class="row-fluid">
+    <h2>Disqus Comments</h2>
+    <div id="disqus_thread"></div>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+
+<script>
+(function(jq){
+    var ds_loaded = false, top = jq("#disqus_thread").offset().top;
+    window.disqus_developer = 1;
+    window.disqus_shortname = 'thinkingandcomputing';
+
+    var page = jq("#tnc-page");
+    var wind = jq(window);
+    function check() {
+        if ( !ds_loaded && page.scrollTop() + wind.height() > top ) {
+            jq.ajax({
+                type: "GET",
+                url: "https://" + disqus_shortname + ".disqus.com/embed.js",
+                dataType: "script",
+                cache: true
+            });
+            ds_loaded = true;
+        }
+    }
+
+    page.scroll(check);
+
+    check();
+})(jQuery);
+</script>
 
               </div>
             </div>

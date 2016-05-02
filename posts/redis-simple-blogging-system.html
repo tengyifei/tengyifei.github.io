@@ -33,7 +33,7 @@
 })();
 </script>
 
-        <div class="tnc-main tnc-layout mdl-layout mdl-js-layout">
+        <div id="tnc-page" class="tnc-main tnc-layout mdl-layout mdl-js-layout">
           <header class="mdl-layout__header mdl-layout__header--transparent mdl-layout__header--scroll">
             <!-- Top row, always visible -->
             <div class="mdl-layout__header-row">
@@ -49,7 +49,7 @@
               </nav>
             </div>
           </header>
-          <div class="mdl-layout__drawer">
+          <div class="mdl-layout__drawer" style="z-index: 200000;">
             <span class="mdl-layout-title">Browse T&amp;C</span>
             <nav class="mdl-navigation">
               <a class="mdl-navigation__link" href="../">Home</a>
@@ -155,13 +155,46 @@ article<span class="st">:index:comment_count</span>
 <p>To cherry pick items in <code>article:index:comment_count</code>, we use the ZINTERSTORE command:</p>
 <pre><code>ZINTERSTORE article:computed_tags:movie:comment_count 2 article:tags:movie article:index:comment_count WEIGHTS 0 1</code></pre>
 <p>The result of the intersection is stored in <span class="lang:default highlight:0 decode:true crayon-inline">article:computed_tags:movie:comment_count</span> . By running the command with weights [0, 1], the scores in the tags sorted set are ignored while those in <span class="lang:default highlight:0 decode:true crayon-inline">article:index:comment_count</span> are transferred as-is. This ultimately preserves the score in the index:</p>
-<pre><code>article:computed_tags:movie:comment_count
-    3 =&gt; 1,
-    5 =&gt; 3</code></pre>
+<div class="sourceCode"><pre class="sourceCode ruby"><code class="sourceCode ruby">article<span class="st">:computed_tags:movie:comment_count</span>
+    <span class="dv">3</span> =&gt; <span class="dv">1</span>,
+    <span class="dv">5</span> =&gt; <span class="dv">3</span></code></pre></div>
 <p>This command runs roughly in O(N log N) time, where N is the size of the tag sorted set. This is no better than grabbing the two lists and doing filtering on our own. However, considering that Redis is a highly optimized database running native code, the reduction in network transfer size and the elegance of the approach should far outweigh any gains from a custom filtering algorithm implemented in a dynamic web scripting language.</p>
 <p>We can even process any combination of tags given as Boolean expressions involving AND and OR, since AND is equivalent to intersection and OR is equivalent to union. Finding out posts under <span class="lang:default decode:true crayon-inline">(movie AND music) OR food</span> sorted by date is accomplished by taking <span class="lang:default decode:true crayon-inline">union(intersect(“movie”, “music”), “food”)</span>, then intersecting it with the date index.</p>
 <h2 id="more-fun-with-zinterstore">More fun with ZINTERSTORE</h2>
 <p>Much freedom comes from the weight option. We can rank articles using a combination of factors e.g. 25% comment count, 25% views and 50% number of likes by doing an intersection of index sorted sets (all of them have the same elements) with the respective weights set.</p>
+
+<div class="row-fluid">
+    <h2>Disqus Comments</h2>
+    <div id="disqus_thread"></div>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+
+<script>
+(function(jq){
+    var ds_loaded = false, top = jq("#disqus_thread").offset().top;
+    window.disqus_developer = 1;
+    window.disqus_shortname = 'thinkingandcomputing';
+
+    var page = jq("#tnc-page");
+    var wind = jq(window);
+    function check() {
+        if ( !ds_loaded && page.scrollTop() + wind.height() > top ) {
+            jq.ajax({
+                type: "GET",
+                url: "https://" + disqus_shortname + ".disqus.com/embed.js",
+                dataType: "script",
+                cache: true
+            });
+            ds_loaded = true;
+        }
+    }
+
+    page.scroll(check);
+
+    check();
+})(jQuery);
+</script>
 
               </div>
             </div>

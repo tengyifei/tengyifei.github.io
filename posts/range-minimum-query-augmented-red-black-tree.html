@@ -33,7 +33,7 @@
 })();
 </script>
 
-        <div class="tnc-main tnc-layout mdl-layout mdl-js-layout">
+        <div id="tnc-page" class="tnc-main tnc-layout mdl-layout mdl-js-layout">
           <header class="mdl-layout__header mdl-layout__header--transparent mdl-layout__header--scroll">
             <!-- Top row, always visible -->
             <div class="mdl-layout__header-row">
@@ -49,7 +49,7 @@
               </nav>
             </div>
           </header>
-          <div class="mdl-layout__drawer">
+          <div class="mdl-layout__drawer" style="z-index: 200000;">
             <span class="mdl-layout-title">Browse T&amp;C</span>
             <nav class="mdl-navigation">
               <a class="mdl-navigation__link" href="../">Home</a>
@@ -73,12 +73,11 @@
 <p>In the technical analysis on financial markets, a common building block for indicators is the minimum and maximum value of price over various chosen time windows. The <em>Ultimate Oscillator</em>, for example, requires information about the maximum and minimum over up to 28 periods. When I was writing code to perform this operation, I initially used the most straight-forward approach: scan the series of prices, and update the min/max values if necessary. While acceptable for a small data set, this method is too slow in practice. I was processing prices generated at one minute intervals, which translates to hundreds of thousands of comparisons per price, and I had to repeat this 1440 times a day, 365 days a year!</p>
 <p>This type of operation is generally known as Range Minimum Query (RMQ), i.e. finding the minimum over a given range. There exist algorithms that can solve it with time complexity O(log n), namely segment trees. Unfortunately, most implementations of segment trees online do not support insertion/deletion of values, and thus won’t be applicable to my situation. The only way was to devise a custom data structure that is dynamic yet can complete the query in O(log n) time.</p>
 <p>I started to look at the different interpretations of segment tree. A segment tree is roughly a structure that represents data ranges, although the details as to how ranges are partitioned vary greatly. <a href="http://wcipeg.com/wiki/Segment_tree">PEGWiki’s version</a> depicts the segment tree as a fully balanced binary tree, where for every parent node with closed range [R<sub>1</sub>, R<sub>2</sub>], the left and right child will correspond to range [R<sub>1</sub>, floor((R<sub>2</sub>-1)/2)] and [floor((R<sub>2</sub>-1)/2)+1, R<sub>2</sub>] respectively. This results in a split at approximately the center of each range.</p>
-<p><img src="https://static.thinkingandcomputing.com/2014/05/segment_tree.png" alt="Example segment tree. Each node assigned an interval." /> Example segment tree. Each node assigned an interval.</p>
+<p><img src="https://static.thinkingandcomputing.com/2014/05/segment_tree.png" alt="Example segment tree. Each node assigned an interval." /> <tnc-caption>Example segment tree. Each node assigned an interval.</tnc-caption></p>
 <p>The advantage of this construct is that it can be nicely packed into an array by storing it as the result of a breadth-first-traversal. The index of the left child node is simply that of parent multiplied by two. However, the drawback is that the position and range of nodes cannot be modified once the tree is created.</p>
 <h2 id="binary-search-trees-as-segment-trees">Binary search trees as segment trees</h2>
 <p>Is there another way to achieve this? After thorough deliberation it turns out that the answer is positive. All ordered binary trees i.e. those whose node’s key is bigger than those in the left sub-tree and smaller than those in the right sub-tree, actually boasts properties very similar to segment trees. Consider the tree below as an example:</p>
-<p>[<img src="https://static.thinkingandcomputing.com/2014/05/btree.png" alt="Binary search tree with ranges labeled" /></p>
-<p>Binary search tree with ranges labeled</p>
+<p>[<img src="https://static.thinkingandcomputing.com/2014/05/btree.png" alt="Binary search tree with ranges labeled" /> <tnc-caption>Binary search tree with ranges labeled</tnc-caption></p>
 <p>The interesting effect here is that as one traverses down the tree, the range of keys possible at each sub-tree is repeatedly constrained. There is no requirement for keys belonging to the sub-tree rooted at 9, but all keys within the sub-tree rooted at 3 must fall in the open interval (-∞, 9), due to the sorted nature of binary search trees. Similarly, the range reduces further to (3, 9) for keys under the sub-tree rooted at 6. We can now see that the lower bound and upper bound corresponding to a particular node can be given as the nearest node above it whose key is smaller/greater than the current node, respectively.</p>
 <p>If we were to follow PEGWiki’s definition of what constitutes a segment tree, then all binary search trees can be classified as segment trees, since each node can be assigned a precise interval within which all keys in the sub-tree rooted at this node will fall.</p>
 <h2 id="augmentingred-black-trees-to-performrange-minimum-query">Augmenting red-black trees to perform range minimum query</h2>
@@ -151,12 +150,41 @@
 }</code></pre></div>
 <h3 id="tree-rotation">Tree rotation</h3>
 <p>This part is a little bit tricky. But it can be shown that only the minimum value within node P and Q will have to be re-evaluated, and that the correct sequence to update them is to process the parent node first i.e. Q during clockwise rotation and P during anti-clockwise rotation.</p>
-<div class="figure">
-<img src="http://upload.wikimedia.org/wikipedia/commons/2/23/Tree_rotation.png" alt="Tree rotation" />
-<p class="caption">Tree rotation</p>
-</div>
-<p>Tree rotation. Image credit Wikipedia.</p>
+<p><img src="http://upload.wikimedia.org/wikipedia/commons/2/23/Tree_rotation.png" alt="Tree rotation" /> <tnc-caption>Tree rotation. Image credit Wikipedia.</tnc-caption></p>
 <p>After switching to the new algorithm, the analysis speed on financial data improved at least by a factor of 100. This certainly demonstrates how vital a good algorithm can be to a program.</p>
+
+<div class="row-fluid">
+    <h2>Disqus Comments</h2>
+    <div id="disqus_thread"></div>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+
+<script>
+(function(jq){
+    var ds_loaded = false, top = jq("#disqus_thread").offset().top;
+    window.disqus_developer = 1;
+    window.disqus_shortname = 'thinkingandcomputing';
+
+    var page = jq("#tnc-page");
+    var wind = jq(window);
+    function check() {
+        if ( !ds_loaded && page.scrollTop() + wind.height() > top ) {
+            jq.ajax({
+                type: "GET",
+                url: "https://" + disqus_shortname + ".disqus.com/embed.js",
+                dataType: "script",
+                cache: true
+            });
+            ds_loaded = true;
+        }
+    }
+
+    page.scroll(check);
+
+    check();
+})(jQuery);
+</script>
 
               </div>
             </div>

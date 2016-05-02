@@ -33,7 +33,7 @@
 })();
 </script>
 
-        <div class="tnc-main tnc-layout mdl-layout mdl-js-layout">
+        <div id="tnc-page" class="tnc-main tnc-layout mdl-layout mdl-js-layout">
           <header class="mdl-layout__header mdl-layout__header--transparent mdl-layout__header--scroll">
             <!-- Top row, always visible -->
             <div class="mdl-layout__header-row">
@@ -49,7 +49,7 @@
               </nav>
             </div>
           </header>
-          <div class="mdl-layout__drawer">
+          <div class="mdl-layout__drawer" style="z-index: 200000;">
             <span class="mdl-layout-title">Browse T&amp;C</span>
             <nav class="mdl-navigation">
               <a class="mdl-navigation__link" href="../">Home</a>
@@ -77,9 +77,9 @@
 <p class="caption">f(x,y)=-sin(x)sin(y)</p>
 </div>
 <p>This is a two-parameter function, hence GA is locating the highest points in two-dimensional space. Here’s the 3D plot:</p>
-<p>[caption id=“” align=“aligncenter” width=“507”]<img src="https://static.thinkingandcomputing.com/2014/04/3dplot.png" alt="3D plot of the search space" /> 3D plot of the search space[/caption]</p>
+<p><img src="https://static.thinkingandcomputing.com/2014/04/3dplot.png" alt="3D plot of the search space" /> <tnc-caption>3D plot of the search space</tnc-caption></p>
 <p>And the contour plot:</p>
-<p>[caption id=“” align=“aligncenter” width=“424”]<img src="https://static.thinkingandcomputing.com/2014/04/contour.png" alt="Contour plot" /> Contour plot[/caption]</p>
+<p><img src="https://static.thinkingandcomputing.com/2014/04/contour.png" alt="Contour plot" /> <tnc-caption>Contour plot</tnc-caption></p>
 <p>It is apparent that the two optimum points lie in the middle of area 1 and 4 respectively. However, they actually belong to different sub-populations. A crossover operation on points taken from both area 1 and area 4 will result in a point that lies in area 2 or 3, which has low fitness scores. E.g. point [1.5, 4.5] combined with [4.0, 1.0] will either yield [1.5, 1.0] (in area 3) or [4.0, 4.5] (in area 2). This shows that crossover operation on different species, or sub-populations, has the potential to produce low-performing offspring. Crossover done on points from the same sub-population, on the other hand, does not pose this issue. E.g. [0.5, 5.0] combined with [0.8, 5.6] may give [0.5, 5.6], which still has a pretty high fitness score.</p>
 <p>In fact, if the population is uniformly distributed over the search space, each crossover operation has 12.5% probability of generating poor offspring from superior parents. This probability soon skyrockets to 50% as the population starts to converge to the two areas of high fitness. <em>This means that half of the computational effort is wasted evaluating and eliminating poor candidates that shouldn’t have been generated in the first place!</em></p>
 <h2 id="curse-of-dimensionality">Curse of dimensionality</h2>
@@ -155,6 +155,39 @@ Loading chart data…
             }
         });
     })(jQuery);
+</script>
+
+<div class="row-fluid">
+    <h2>Disqus Comments</h2>
+    <div id="disqus_thread"></div>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+
+<script>
+(function(jq){
+    var ds_loaded = false, top = jq("#disqus_thread").offset().top;
+    window.disqus_developer = 1;
+    window.disqus_shortname = 'thinkingandcomputing';
+
+    var page = jq("#tnc-page");
+    var wind = jq(window);
+    function check() {
+        if ( !ds_loaded && page.scrollTop() + wind.height() > top ) {
+            jq.ajax({
+                type: "GET",
+                url: "https://" + disqus_shortname + ".disqus.com/embed.js",
+                dataType: "script",
+                cache: true
+            });
+            ds_loaded = true;
+        }
+    }
+
+    page.scroll(check);
+
+    check();
+})(jQuery);
 </script>
 
               </div>

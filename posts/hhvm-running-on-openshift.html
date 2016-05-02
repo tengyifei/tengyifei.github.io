@@ -33,7 +33,7 @@
 })();
 </script>
 
-        <div class="tnc-main tnc-layout mdl-layout mdl-js-layout">
+        <div id="tnc-page" class="tnc-main tnc-layout mdl-layout mdl-js-layout">
           <header class="mdl-layout__header mdl-layout__header--transparent mdl-layout__header--scroll">
             <!-- Top row, always visible -->
             <div class="mdl-layout__header-row">
@@ -49,7 +49,7 @@
               </nav>
             </div>
           </header>
-          <div class="mdl-layout__drawer">
+          <div class="mdl-layout__drawer" style="z-index: 200000;">
             <span class="mdl-layout-title">Browse T&amp;C</span>
             <nav class="mdl-navigation">
               <a class="mdl-navigation__link" href="../">Home</a>
@@ -90,6 +90,39 @@
 <li>For some unclear reason, HHVM could not bind to a TCP address in FastCGI mode. So I switched to Unix file sockets instead. They were commonly regarded faster anyways.</li>
 </ul>
 <p>Initially I could not get HHVM to read the configuration by any means. It loaded the file and nothing happened. After many hours of debugging I discovered the culprit was line ending characters. On Windows, git would automatically convert CR LF to the Unix-style LF when pushing, but this was not the case in Linux, and the CR LF line endings somehow caused HHVM to stop parsing the file.</p>
+
+<div class="row-fluid">
+    <h2>Disqus Comments</h2>
+    <div id="disqus_thread"></div>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+
+<script>
+(function(jq){
+    var ds_loaded = false, top = jq("#disqus_thread").offset().top;
+    window.disqus_developer = 1;
+    window.disqus_shortname = 'thinkingandcomputing';
+
+    var page = jq("#tnc-page");
+    var wind = jq(window);
+    function check() {
+        if ( !ds_loaded && page.scrollTop() + wind.height() > top ) {
+            jq.ajax({
+                type: "GET",
+                url: "https://" + disqus_shortname + ".disqus.com/embed.js",
+                dataType: "script",
+                cache: true
+            });
+            ds_loaded = true;
+        }
+    }
+
+    page.scroll(check);
+
+    check();
+})(jQuery);
+</script>
 
               </div>
             </div>

@@ -33,7 +33,7 @@
 })();
 </script>
 
-        <div class="tnc-main tnc-layout mdl-layout mdl-js-layout">
+        <div id="tnc-page" class="tnc-main tnc-layout mdl-layout mdl-js-layout">
           <header class="mdl-layout__header mdl-layout__header--transparent mdl-layout__header--scroll">
             <!-- Top row, always visible -->
             <div class="mdl-layout__header-row">
@@ -49,7 +49,7 @@
               </nav>
             </div>
           </header>
-          <div class="mdl-layout__drawer">
+          <div class="mdl-layout__drawer" style="z-index: 200000;">
             <span class="mdl-layout-title">Browse T&amp;C</span>
             <nav class="mdl-navigation">
               <a class="mdl-navigation__link" href="../">Home</a>
@@ -75,6 +75,39 @@
 <p>So programming languages are really the brain-machine medium, and a bad language simply makes you wrap your brain when writing it. The worse it is, the more migraines you can expect. I took a CS course with an unusual proclivity for design patterns and was sick of it. “Visitor pattern”, “Specification by subclass”, oh well. Many are merely poor man’s version of a more general feature in a better language. So Java does single dispatch, okay, don’t worry, just use the visitor pattern and write your implementation in the subclasses. Right, and now you’ve got multiple dispatch in Scala and poof, the kludge goes away. I wouldn’t go into more details with anonymous classes vs. functions etc. Just so this post does not turn into a complaint-box against Java, I’d like to point out that these are inherited (well everybody likes inheritance) all the way from the early prototypes of inheritance theory and object-oriented programming. People talk about high cohesion and low coupling, but nobody makes a greater case with brain-power-per-functionality, a somewhat correlated but different indicator.</p>
 <p>There are places where object-oriented programming performs well: when things are actually objects. I wrote a window compositor in graphics user-interface code for ECE391 and it was a joy to unleash the full power of C++ and its object model: window moves, drags and renders, mouse moves, drags (trivially) and renders, a button moves, drags and renders. Let’s arrange them in a tree and render them all! So OOP works, but only where it’s supposed to work. The more extraneous imaginary concepts you invent: user profile manager, abstract content policy factories, IDoSomethingProvider, dump-everything-in-me-singleton, the more distant the code is bound to get from your mind, and overall programmer efficiency decays.</p>
 <p>To wrap things up, mobilize your mind when picking a language (really).</p>
+
+<div class="row-fluid">
+    <h2>Disqus Comments</h2>
+    <div id="disqus_thread"></div>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+
+<script>
+(function(jq){
+    var ds_loaded = false, top = jq("#disqus_thread").offset().top;
+    window.disqus_developer = 1;
+    window.disqus_shortname = 'thinkingandcomputing';
+
+    var page = jq("#tnc-page");
+    var wind = jq(window);
+    function check() {
+        if ( !ds_loaded && page.scrollTop() + wind.height() > top ) {
+            jq.ajax({
+                type: "GET",
+                url: "https://" + disqus_shortname + ".disqus.com/embed.js",
+                dataType: "script",
+                cache: true
+            });
+            ds_loaded = true;
+        }
+    }
+
+    page.scroll(check);
+
+    check();
+})(jQuery);
+</script>
 
               </div>
             </div>

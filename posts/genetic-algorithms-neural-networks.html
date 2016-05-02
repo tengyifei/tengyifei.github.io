@@ -33,7 +33,7 @@
 })();
 </script>
 
-        <div class="tnc-main tnc-layout mdl-layout mdl-js-layout">
+        <div id="tnc-page" class="tnc-main tnc-layout mdl-layout mdl-js-layout">
           <header class="mdl-layout__header mdl-layout__header--transparent mdl-layout__header--scroll">
             <!-- Top row, always visible -->
             <div class="mdl-layout__header-row">
@@ -49,7 +49,7 @@
               </nav>
             </div>
           </header>
-          <div class="mdl-layout__drawer">
+          <div class="mdl-layout__drawer" style="z-index: 200000;">
             <span class="mdl-layout-title">Browse T&amp;C</span>
             <nav class="mdl-navigation">
               <a class="mdl-navigation__link" href="../">Home</a>
@@ -82,6 +82,39 @@
 <p><a href="https://static.thinkingandcomputing.com/2014/03/nn.png"><img src="https://static.thinkingandcomputing.com/2014/03/nn.png" alt="Two neural networks" /></a></p>
 <p>The two networks are essentially mirror reflections of each other, hence produce the same output. But if the cross-over operation is applied, the behavior of the resulting neural network will deviate significantly from that of the parents. Since GA is unaware of the internal structures of the two networks, it will combine weights belonging to nodes of different roles. Hence two superior networks of different structure, when crossed, may result in offspring performing poorly.</p>
 <p>The crux of the problem lies in the encoding method for neural networks. Network weights are generally stored based on a fixed indexing scheme: nodes are numbered sequentially, laterally regardless of their significance and impact on the next layer. This causes GA to confuse nodes of different roles. Until an intelligent approach to determine nodes of similar roles is devised and the corresponding role-based encoding method used, the efficacy of GA in training neural networks will be much limited. The method must give the same encoded result for both network A and B above, since they are, after all, functionally identical networks.</p>
+
+<div class="row-fluid">
+    <h2>Disqus Comments</h2>
+    <div id="disqus_thread"></div>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+
+<script>
+(function(jq){
+    var ds_loaded = false, top = jq("#disqus_thread").offset().top;
+    window.disqus_developer = 1;
+    window.disqus_shortname = 'thinkingandcomputing';
+
+    var page = jq("#tnc-page");
+    var wind = jq(window);
+    function check() {
+        if ( !ds_loaded && page.scrollTop() + wind.height() > top ) {
+            jq.ajax({
+                type: "GET",
+                url: "https://" + disqus_shortname + ".disqus.com/embed.js",
+                dataType: "script",
+                cache: true
+            });
+            ds_loaded = true;
+        }
+    }
+
+    page.scroll(check);
+
+    check();
+})(jQuery);
+</script>
 
               </div>
             </div>

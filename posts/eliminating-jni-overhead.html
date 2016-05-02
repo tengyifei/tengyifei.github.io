@@ -33,7 +33,7 @@
 })();
 </script>
 
-        <div class="tnc-main tnc-layout mdl-layout mdl-js-layout">
+        <div id="tnc-page" class="tnc-main tnc-layout mdl-layout mdl-js-layout">
           <header class="mdl-layout__header mdl-layout__header--transparent mdl-layout__header--scroll">
             <!-- Top row, always visible -->
             <div class="mdl-layout__header-row">
@@ -49,7 +49,7 @@
               </nav>
             </div>
           </header>
-          <div class="mdl-layout__drawer">
+          <div class="mdl-layout__drawer" style="z-index: 200000;">
             <span class="mdl-layout-title">Browse T&amp;C</span>
             <nav class="mdl-navigation">
               <a class="mdl-navigation__link" href="../">Home</a>
@@ -69,7 +69,7 @@
 </div>
 
 <p>Out of all Java codes convertible to C using the Java Native Interface, the following breed is the hardest to optimize: methods that are invoked very frequently and have low run time. More often than not the overhead entailed by JNI becomes significant enough that it offsets any gain in speed brought by native code, or worse, making the resulting program even slower. When optimizing a Java-based matrix multiplication program, I encountered a lot of such methods. Most of them are in the form of nested loops responsible of manipulating matrices on the order of 100 elements. Such trivial methods are generally not considered during optimization, but this time the sheer number of invocations have placed them at the top of the hot spot list. </p>
-<p><img src="https://static.thinkingandcomputing.com/2014/03/hotspot.png" alt="Lots of invocations amplifies the JNI overhead" /> Death by the numbers</p>
+<p><img src="https://static.thinkingandcomputing.com/2014/03/hotspot.png" alt="Lots of invocations amplifies the JNI overhead" /> <tnc-caption>Death by the numbers</tnc-caption></p>
 <p>Without proper optimization, the JNI-ed version actually takes more time than the Java implementation, due to various overhead. </p>
 <h2 id="doing-away-with-jni-altogether">Doing away with JNI altogether?</h2>
 <p>There exists a <em>de-jure</em> solution: implement custom Java intrinsic functions. Many Java functions, mainly Math.* and Unsafe.*, already have their intrinsic counterparts built-in. When a piece of code calls one of such methods frequent enough, the JVM will directly inline the assembly from the intrinsic into the function call, effectively removing all call overhead while providing a fast implementation. While the built-in intrinsic functions are limited, it is possible to add your own intrinsics by modifying and recompiling the JVM. As stated in <a href="http://www.slideshare.net/RednaxelaFX/green-teajug-hotspotintrinsics02232013" title="Intrinsic Methods in HotSpot VM">this slide</a>, the Taobao JDK team implemented CRC32C intrinsics, which resulted in a more than 10x speed-up in CRC32 evaluation. </p>
@@ -142,6 +142,39 @@ JNIEXPORT <span class="dt">void</span> JNICALL Java_test_JNItest_callJNIMethod2(
 <p>But speed is not everything. Performance gains aside, this method has some serious limitations. According to Sun documentation, the Get/ReleasePrimitiveArrayCritical methods are supposed to be used like a critical section, meaning that pointers obtained should be briefly released instead of being held over a long period of time. It also suggests that doing otherwise may cause the VM to pause garbage collection, unless it supports pinning. A quick search indicated that most modern JVMs do not support pinning due to it being detrimental to performance of concurrent mark-sweep GC. This is further validated by the fact that on my testing environment (jdk 1.8.0), GC was disabled once GetPrimitiveArrayCritical was called and never released, causing the VM to eventually throw OutOfMemoryError. Hence the pointer needs to be periodically released to let GC catch a breath.</p>
 <h2 id="using-bytebuffer">3. Using ByteBuffer</h2>
 <p>The thrid method is a compromise from the second one. Java ByteBuffers allocate memory regions exempt from GC, hence won’t be moved around or freed automatically. You can use ByteBuffer to create an area of the size equivalent to a float array, pass the pointer to the native code and perform operations on it. The ByteBuffer can be manipulated as an array of arbitrary primitive type by creating a view buffer. However, the downside is that existing code must be rewritten to use the view buffer to access the array.</p>
+
+<div class="row-fluid">
+    <h2>Disqus Comments</h2>
+    <div id="disqus_thread"></div>
+    <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+
+<script>
+(function(jq){
+    var ds_loaded = false, top = jq("#disqus_thread").offset().top;
+    window.disqus_developer = 1;
+    window.disqus_shortname = 'thinkingandcomputing';
+
+    var page = jq("#tnc-page");
+    var wind = jq(window);
+    function check() {
+        if ( !ds_loaded && page.scrollTop() + wind.height() > top ) {
+            jq.ajax({
+                type: "GET",
+                url: "https://" + disqus_shortname + ".disqus.com/embed.js",
+                dataType: "script",
+                cache: true
+            });
+            ds_loaded = true;
+        }
+    }
+
+    page.scroll(check);
+
+    check();
+})(jQuery);
+</script>
 
               </div>
             </div>
