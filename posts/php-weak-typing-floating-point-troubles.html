@@ -44,6 +44,7 @@
               <nav class="mdl-navigation">
                   <a class="mdl-navigation__link" href="../">Home</a>
                   <a class="mdl-navigation__link" href="../about.html">About</a>
+                  <a class="mdl-navigation__link" href="../pages/past-projects.html">Past Projects</a>
                   <a class="mdl-navigation__link" href="../archive.html">Archive</a>
               </nav>
             </div>
@@ -53,6 +54,7 @@
             <nav class="mdl-navigation">
               <a class="mdl-navigation__link" href="../">Home</a>
               <a class="mdl-navigation__link" href="../about.html">About</a>
+              <a class="mdl-navigation__link" href="../pages/past-projects.html">Past Projects</a>
               <a class="mdl-navigation__link" href="../archive.html">Archive</a>
             </nav>
           </div>
@@ -66,43 +68,58 @@
     
 </div>
 
-<p>
-I was coding a PHP library to parse some RPC protocol. One of the steps involved decoding 64-bit signed Long numbers serialized over the Internet. The protocol encoded the Long number using <a href="http://en.wikipedia.org/wiki/Two's_complement" target="_blank">two’s complement encoding</a> and then converted it to BASE64. I wrote the following function to convert the BASE64 number back to decimal:
-</p>
-<pre lang="php">self::$TWO_TO_63 = pow(2,63);
-self::$TWO_TO_64 = pow(2,64);
+<p>I was coding a PHP library to parse some RPC protocol. One of the steps involved decoding 64-bit signed Long numbers serialized over the Internet. The protocol encoded the Long number using <a href="http://en.wikipedia.org/wiki/Two's_complement">two’s complement encoding</a> and then converted it to BASE64. I wrote the following function to convert the BASE64 number back to decimal:</p>
+<div class="sourceCode"><pre class="sourceCode php"><code class="sourceCode php"><span class="kw">self</span>::<span class="kw">$TWO_TO_63</span> = <span class="fu">pow</span><span class="ot">(</span><span class="dv">2</span><span class="ot">,</span><span class="dv">63</span><span class="ot">);</span>
+<span class="kw">self</span>::<span class="kw">$TWO_TO_64</span> = <span class="fu">pow</span><span class="ot">(</span><span class="dv">2</span><span class="ot">,</span><span class="dv">64</span><span class="ot">);</span>
 
-public static function base64toDecimal($base64){
-    $digits = strlen($base64)-1;
-    $multiplier = 1;
-    $result = 0;
-    while ($digits &gt;= 0){
-        $result += self::base64toDecSingle($base64[$digits]) * $multiplier;
-        $multiplier *= 64;
-        $digits--;
+<span class="kw">public</span> <span class="kw">static</span> <span class="kw">function</span> base64toDecimal<span class="ot">(</span><span class="kw">$base64</span><span class="ot">)</span>{
+    <span class="kw">$digits</span> = <span class="fu">strlen</span><span class="ot">(</span><span class="kw">$base64</span><span class="ot">)</span>-<span class="dv">1</span><span class="ot">;</span>
+    <span class="kw">$multiplier</span> = <span class="dv">1</span><span class="ot">;</span>
+    <span class="kw">$result</span> = <span class="dv">0</span><span class="ot">;</span>
+    <span class="kw">while</span> <span class="ot">(</span><span class="kw">$digits</span> &gt;= <span class="dv">0</span><span class="ot">)</span>{
+        <span class="kw">$result</span> += <span class="kw">self</span>::base64toDecSingle<span class="ot">(</span><span class="kw">$base64</span><span class="ot">[</span><span class="kw">$digits</span><span class="ot">])</span> * <span class="kw">$multiplier</span><span class="ot">;</span>
+        <span class="kw">$multiplier</span> *= <span class="dv">64</span><span class="ot">;</span>
+        <span class="kw">$digits</span>--<span class="ot">;</span>
     }
-    if ($result &gt;= self::$TWO_TO_63){    //wrap around
-        return ($result - self::$TWO_TO_64);
+    <span class="kw">if</span> <span class="ot">(</span><span class="kw">$result</span> &gt;= <span class="kw">self</span>::<span class="kw">$TWO_TO_63</span><span class="ot">)</span>{    <span class="co">//wrap around</span>
+        <span class="kw">return</span> <span class="ot">(</span><span class="kw">$result</span> - <span class="kw">self</span>::<span class="kw">$TWO_TO_64</span><span class="ot">);</span>
     }
-    return $result;
-}
-</pre>
-<p>
-Where base64toDecSingle is another function that takes a single BASE64 character and converts it to decimal format.
-</p>
-<p>
-<p>The algorithm starts from the least significant digit, adding each digit multiplied by an appropriate coefficient to the result. Because PHP doesn’t allow integer overflow to happen, the variable <span class="math inline">$result will be automatically cast to floating-point when it gets too large, and can never wrap around, behaving more like a infinitely-large unsigned type. This, coupled with the fact that two's complement encoding is used, causes negative numbers to be erroneously converted to huge positive numbers as the signed Long is interpreted as an unsigned one. Hence special handling is applied when the function detects that the sign bit is one, which can be deduced from the number being larger than or equal to 2^63 (10000000.....&lt;sub&gt;2&lt;/sub&gt;).&lt;/p&gt;&lt;p&gt;There are no apparent logical mistakes in the above code, but when it comes to testing, everything started to fall apart. I was getting -1 convert to 0, and a whole bunch of other terrible inaccuracies. After many hours of futile debugging (it is tempting to think that there is an off-by-one error which is not the case, given that -1 became 0), I narrowed down the source of error to PHP's floating-point implementation.&lt;!--more--&gt;To see the problem, let's first look at the underlying floating-point format used by PHP: IEEE 754 double-precision binary floating point. &lt;/p&gt;[caption id=&quot;&quot; align=&quot;aligncenter&quot; width=&quot;618&quot;]&lt;img src=&quot;http://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/IEEE_754_Double_Floating_Point_Format.svg/618px-IEEE_754_Double_Floating_Point_Format.svg.png&quot; alt=&quot;Layout of bits usage in IEEE 754 double&quot; width=&quot;618&quot; height=&quot;125&quot; /&gt; Layout of bits usage in IEEE 754 double &lt;a href=&quot;#ref1&quot;&gt;[1]&lt;/a&gt;[/caption]&lt;p&gt;The entire representation occupies 64 bits, of which 54 bits are used to encode the significant digits in the floating-point number. This gives about log(2^52)≈15.7 meaningful digits. The implication is that when you add a very small number (e.g. 1) to a huge number, the change would be so minute that it cannot be represented by the format at all. Most implementations will return the best approximate, which in many cases will still be the original number. To test this, I wrote the following code:&lt;/p&gt;&lt;pre toolbar=&quot;false&quot;&gt;$</span>large_number = pow(10, 20); //over the limit within which the entire //number can be represented digit-perfect echo $large_number + 1 - <span class="math inline">$large_number; &lt;/pre&gt;&lt;p&gt;Guess what the output is? That's right, &lt;em&gt;zero&lt;/em&gt;!&lt;/p&gt;&lt;p&gt;With this limitation in mind, we can reexamine the previous piece of code, and spot the problem at line 14. Since PHP follows the always-cast-to-float-when-overflow rule, negative numbers will inevitably become floating-point. Negative one, being decoded to 2^64 - 1 when interpreted as unsigned long, is well out of the range of numbers representable by PHP without loss of precision, and is basically equivalent to 2^64, which will yield zero upon further processing.&lt;/p&gt;&lt;p&gt;Fortunately, PHP provides several ways to handle huge numbers properly. One ways is through the bcmath functions, which provides arbitrary-precision arithmetic. The above function can be rewritten to take advantage of them, and nearly all conversion errors were eliminated:&lt;/p&gt;&lt;pre lang=&quot;php&quot;&gt;self::$</span>TWO_TO_63 = bcpow(‘2’, ‘63’); self::$TWO_TO_64 = bcpow(‘2’, ‘64’);</p>
-public static function base64toDecimal($base64){ <span class="math inline"><em>d</em><em>i</em><em>g</em><em>i</em><em>t</em><em>s</em> = <em>s</em><em>t</em><em>r</em><em>l</em><em>e</em><em>n</em>(</span>base64)-1; $multiplier = ‘1’; <span class="math inline"><em>r</em><em>e</em><em>s</em><em>u</em><em>l</em><em>t</em> = ′0′;<em>w</em><em>h</em><em>i</em><em>l</em><em>e</em>(</span>digits &gt;= 0){ <span class="math inline"><em>r</em><em>e</em><em>s</em><em>u</em><em>l</em><em>t</em> = <em>b</em><em>c</em><em>a</em><em>d</em><em>d</em>(</span>result, bcmul(strval(self::base64toDecSingle(<span class="math inline"><em>b</em><em>a</em><em>s</em><em>e</em>64[</span>digits])), $multiplier)); <span class="math inline"><em>m</em><em>u</em><em>l</em><em>t</em><em>i</em><em>p</em><em>l</em><em>i</em><em>e</em><em>r</em> = <em>b</em><em>c</em><em>m</em><em>u</em><em>l</em>(</span>multiplier, ‘64’); <span class="math inline">$digits--;  }  if (bccomp($</span>result, self::<span class="math inline">$TWO_TO_63)==1){ //wrap around  return (float)(bcsub($</span>result, self::<span class="math inline">$TWO_TO_64));  }  return (float)$</span>result; }
-</pre>
-<p>
-Notice that is still a single conversion to float happening at either line 14 or 16. As PHP does not support operator overloading, there is no way to let existing code switch over from floating-point to arbitrary-precision arithmetic without rewriting all of them, so I might as well do the conversion here to preserve some consistency.
-</p>
-<p>
- 
-</p>
-<p>
-<a id="ref1"></a>[1] <a href="http://en.wikipedia.org/wiki/Double-precision_floating-point_format" target="_blank">http://en.wikipedia.org/wiki/Double-precision_floating-point_format</a>
-</p>
+    <span class="kw">return</span> <span class="kw">$result</span><span class="ot">;</span>
+}</code></pre></div>
+<p>Where base64toDecSingle is another function that takes a single BASE64 character and converts it to decimal format.</p>
+<p>The algorithm starts from the least significant digit, adding each digit multiplied by an appropriate coefficient to the result. Because PHP doesn’t allow integer overflow to happen, the variable $result will be automatically cast to floating-point when it gets too large, and can never wrap around, behaving more like a infinitely-large unsigned type. This, coupled with the fact that two’s complement encoding is used, causes negative numbers to be erroneously converted to huge positive numbers as the signed Long is interpreted as an unsigned one. Hence special handling is applied when the function detects that the sign bit is one, which can be deduced from the number being larger than or equal to 2^63 (10000000…..<sub>2</sub>).</p>
+<p>There are no apparent logical mistakes in the above code, but when it comes to testing, everything started to fall apart. I was getting -1 convert to 0, and a whole bunch of other terrible inaccuracies. After many hours of futile debugging (it is tempting to think that there is an off-by-one error which is not the case, given that -1 became 0), I narrowed down the source of error to PHP’s floating-point implementation.To see the problem, let’s first look at the underlying floating-point format used by PHP: IEEE 754 double-precision binary floating point. </p>
+<div class="figure">
+<img src="http://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/IEEE_754_Double_Floating_Point_Format.svg/618px-IEEE_754_Double_Floating_Point_Format.svg.png" alt="Layout of bits usage in IEEE 754 double" />
+<p class="caption">Layout of bits usage in IEEE 754 double</p>
+</div>
+<p>Layout of bits usage in IEEE 754 double <a href="#ref1">[1]</a></p>
+<p>The entire representation occupies 64 bits, of which 54 bits are used to encode the significant digits in the floating-point number. This gives about log(2^52)≈15.7 meaningful digits. The implication is that when you add a very small number (e.g. 1) to a huge number, the change would be so minute that it cannot be represented by the format at all. Most implementations will return the best approximate, which in many cases will still be the original number. To test this, I wrote the following code:</p>
+<div class="sourceCode"><pre class="sourceCode php"><code class="sourceCode php"><span class="kw">$large_number</span> = <span class="fu">pow</span><span class="ot">(</span><span class="dv">10</span><span class="ot">,</span> <span class="dv">20</span><span class="ot">);</span>   <span class="co">//over the limit within which the entire</span>
+                               <span class="co">//number can be represented digit-perfect</span>
+<span class="fu">echo</span> <span class="kw">$large_number</span> + <span class="dv">1</span> - <span class="kw">$large_number</span><span class="ot">;</span></code></pre></div>
+<p>Guess what the output is? That’s right, <em>zero</em>!</p>
+<p>With this limitation in mind, we can reexamine the previous piece of code, and spot the problem at line 14. Since PHP follows the always-cast-to-float-when-overflow rule, negative numbers will inevitably become floating-point. Negative one, being decoded to 2^64 - 1 when interpreted as unsigned long, is well out of the range of numbers representable by PHP without loss of precision, and is basically equivalent to 2^64, which will yield zero upon further processing.</p>
+<p>Fortunately, PHP provides several ways to handle huge numbers properly. One ways is through the bcmath functions, which provides arbitrary-precision arithmetic. The above function can be rewritten to take advantage of them, and nearly all conversion errors were eliminated:</p>
+<div class="sourceCode"><pre class="sourceCode php"><code class="sourceCode php"><span class="kw">self</span>::<span class="kw">$TWO_TO_63</span> = <span class="fu">bcpow</span><span class="ot">(</span><span class="st">'2'</span><span class="ot">,</span> <span class="st">'63'</span><span class="ot">);</span>
+<span class="kw">self</span>::<span class="kw">$TWO_TO_64</span> = <span class="fu">bcpow</span><span class="ot">(</span><span class="st">'2'</span><span class="ot">,</span> <span class="st">'64'</span><span class="ot">);</span>
+
+<span class="kw">public</span> <span class="kw">static</span> <span class="kw">function</span> base64toDecimal<span class="ot">(</span><span class="kw">$base64</span><span class="ot">)</span>{
+    <span class="kw">$digits</span> = <span class="fu">strlen</span><span class="ot">(</span><span class="kw">$base64</span><span class="ot">)</span>-<span class="dv">1</span><span class="ot">;</span>
+    <span class="kw">$multiplier</span> = <span class="st">'1'</span><span class="ot">;</span>
+    <span class="kw">$result</span> = <span class="st">'0'</span><span class="ot">;</span>
+    <span class="kw">while</span> <span class="ot">(</span><span class="kw">$digits</span> &gt;= <span class="dv">0</span><span class="ot">)</span>{
+        <span class="kw">$result</span> = <span class="fu">bcadd</span><span class="ot">(</span><span class="kw">$result</span><span class="ot">,</span> <span class="fu">bcmul</span><span class="ot">(</span><span class="fu">strval</span><span class="ot">(</span><span class="kw">self</span>::base64toDecSingle<span class="ot">(</span><span class="kw">$base64</span><span class="ot">[</span><span class="kw">$digits</span><span class="ot">])),</span> <span class="kw">$multiplier</span><span class="ot">));</span>
+        <span class="kw">$multiplier</span> = <span class="fu">bcmul</span><span class="ot">(</span><span class="kw">$multiplier</span><span class="ot">,</span> <span class="st">'64'</span><span class="ot">);</span>
+        <span class="kw">$digits</span>--<span class="ot">;</span>
+    }
+    <span class="kw">if</span> <span class="ot">(</span><span class="fu">bccomp</span><span class="ot">(</span><span class="kw">$result</span><span class="ot">,</span> <span class="kw">self</span>::<span class="kw">$TWO_TO_63</span><span class="ot">)</span>==<span class="dv">1</span><span class="ot">)</span>{    <span class="co">//wrap around</span>
+        <span class="kw">return</span> <span class="dt">(float)</span><span class="ot">(</span><span class="fu">bcsub</span><span class="ot">(</span><span class="kw">$result</span><span class="ot">,</span> <span class="kw">self</span>::<span class="kw">$TWO_TO_64</span><span class="ot">));</span>
+    }
+    <span class="kw">return</span> <span class="dt">(float)</span><span class="kw">$result</span><span class="ot">;</span>
+}</code></pre></div>
+<p>Notice that is still a single conversion to float happening at either line 14 or 16. As PHP does not support operator overloading, there is no way to let existing code switch over from floating-point to arbitrary-precision arithmetic without rewriting all of them, so I might as well do the conversion here to preserve some consistency.</p>
+<p><a id="ref1"></a>[1] <a href="http://en.wikipedia.org/wiki/Double-precision_floating-point_format" class="uri">http://en.wikipedia.org/wiki/Double-precision_floating-point_format</a></p>
 
               </div>
             </div>

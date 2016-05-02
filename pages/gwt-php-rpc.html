@@ -2,14 +2,16 @@
 <html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-        <title>Contact | Thinking and Computing</title>
+        <title>GWT-PHP RPC Example | Thinking and Computing</title>
         <!-- Material Library -->
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/material-design-lite/1.1.3/material.min.css" integrity="sha256-8/FvSMufaMDFDGPISKeLSup0kzLXG2IjRnmpPtcyxjY=" crossorigin="anonymous">
         <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
         <!-- Fonts -->
         <link href="https://fonts.googleapis.com/css?family=Courgette|Raleway:400,200,700" rel="stylesheet" type="text/css">
 
-        <link rel="stylesheet" type="text/css" href="./css/default.css" />
+        <script src="https://cdn.jsdelivr.net/jquery/3.0.0-beta1/jquery.min.js"></script>
+
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
     </head>
     <body>
         <div id="tnc-background"></div>
@@ -36,29 +38,79 @@
             <!-- Top row, always visible -->
             <div class="mdl-layout__header-row">
               <!-- Title -->
-              <span class="mdl-layout-title"><a href="./">Thinking and Computing</a></span>
+              <span class="mdl-layout-title"><a href="../">Thinking and Computing</a></span>
               <div class="mdl-layout-spacer"></div>
               <!-- Navigation -->
               <nav class="mdl-navigation">
-                  <a class="mdl-navigation__link" href="./">Home</a>
-                  <a class="mdl-navigation__link" href="./about.html">About</a>
-                  <a class="mdl-navigation__link" href="./archive.html">Archive</a>
+                  <a class="mdl-navigation__link" href="../">Home</a>
+                  <a class="mdl-navigation__link" href="../about.html">About</a>
+                  <a class="mdl-navigation__link" href="../pages/past-projects.html">Past Projects</a>
+                  <a class="mdl-navigation__link" href="../archive.html">Archive</a>
               </nav>
             </div>
           </header>
           <div class="mdl-layout__drawer">
             <span class="mdl-layout-title">Browse T&amp;C</span>
             <nav class="mdl-navigation">
-              <a class="mdl-navigation__link" href="./">Home</a>
-              <a class="mdl-navigation__link" href="./about.html">About</a>
-              <a class="mdl-navigation__link" href="./archive.html">Archive</a>
+              <a class="mdl-navigation__link" href="../">Home</a>
+              <a class="mdl-navigation__link" href="../about.html">About</a>
+              <a class="mdl-navigation__link" href="../pages/past-projects.html">Past Projects</a>
+              <a class="mdl-navigation__link" href="../archive.html">Archive</a>
             </nav>
           </div>
           <main class="tnc-main mdl-layout__content">
             <div class="tnc-container mdl-grid">
               <div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
               <div class="tnc-content mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
-                  <p>I live in a small hut in the mountains of Kumano Kodō on Kii Hantō and would not like to be contacted.</p>
+                  <h1>GWT-PHP RPC Example</h1>
+<div class="info">
+    Posted on May 11, 2014
+    
+</div>
+
+<p>
+This project lets you call PHP functions using GWT’s built-in RPC mechanism. 
+</p>
+<h2>
+Demo
+</h2>
+<p>
+<iframe id="gwt-demo-frame" width="600px" height="350px" seamless src="../wp-content/gwtphp-demo.html">
+</iframe>
+</p>
+<p>
+Server-side code:
+</p>
+<pre lang="php">&lt;?php
+class GreetingServiceImpl {
+
+    public function greetServer($input){
+        $userAgent = $_SERVER['HTTP_USER_AGENT'];
+
+        $input = $this-&gt;escapeHtml($input);
+        $userAgent = $this-&gt;escapeHtml($userAgent);
+
+        return "Hello, " . $input . "!&lt;br&gt;&lt;br&gt;I am running " . "PHP " . phpversion()
+        . ".&lt;br&gt;&lt;br&gt;It looks like you are using:&lt;br&gt;" . $userAgent;
+    }
+
+    private function escapeHtml($html){
+        return htmlspecialchars($html);
+    }
+
+    public function getSumLong($a, $b){
+        return $a-&gt;longValue() + $b-&gt;longValue();
+    }
+
+    public function doError(){
+        throw new IllegalArgumentException("Java system exception");
+    }
+}
+</pre>
+<p>
+Project on github: <a href="http://github.com/tengyifei/gwtphp" target="_blank">http://github.com/tengyifei/gwtphp</a>
+</p>
+
               </div>
             </div>
           </main>
