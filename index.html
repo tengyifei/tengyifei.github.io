@@ -2,21 +2,35 @@
 <html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-        <title>Home</title>
+        <title>Home | Thinking and Computing</title>
         <!-- Material Library -->
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/material-design-lite/1.1.3/material.min.css" integrity="sha256-8/FvSMufaMDFDGPISKeLSup0kzLXG2IjRnmpPtcyxjY=" crossorigin="anonymous">
         <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
         <link rel="stylesheet" type="text/css" href="./css/default.css" />
     </head>
-    <body class="tnc-background">
+    <body>
+        <div id="tnc-background"></div>
+        <script>
+(function() {
+    var imageNames = [
+        
+        'images/cover/bridge.jpg',
+        
+        'images/cover/newyork.jpg',
+        
+    ];
+    var img = imageNames[Math.floor(Math.random() * imageNames.length)];
+    document.getElementById('tnc-background').style = 'background-image: url(\'/' + img + '\');';
+})();
+</script>
 
-        <div class="tnc-layout mdl-layout mdl-js-layout">
+        <div class="tnc-main tnc-layout mdl-layout mdl-js-layout">
           <header class="mdl-layout__header mdl-layout__header--transparent mdl-layout__header--scroll">
             <!-- Top row, always visible -->
             <div class="mdl-layout__header-row">
               <!-- Title -->
-              <span class="mdl-layout-title">Thinking and Computing</span>
+              <span class="mdl-layout-title"><a href="./">Thinking and Computing</a></span>
               <div class="mdl-layout-spacer"></div>
               <!-- Navigation -->
               <nav class="mdl-navigation">
@@ -40,11 +54,8 @@
             <div class="tnc-container mdl-grid">
               <div class="mdl-cell mdl-cell--2-col mdl-cell--hide-tablet mdl-cell--hide-phone"></div>
               <div class="tnc-content mdl-color--white mdl-shadow--4dp content mdl-color-text--grey-800 mdl-cell mdl-cell--8-col">
-                  <h2>Welcome</h2>
+                  <h3>Featured Posts</h3>
 
-<p>Welcome to my blog!</p>
-
-<h2>Posts</h2>
 <ul>
     
         <li>
