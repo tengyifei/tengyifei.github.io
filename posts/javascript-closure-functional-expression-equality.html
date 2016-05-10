@@ -69,7 +69,7 @@
     
 </div>
 
-<p>Lately I made a mistake which I thought to be pretty prevalent among JavaScript beginners. More importantly, it revealed a subtle cross-browser JavaScript inconsistency regarding function declarations. I hope this article can clarify things a bit.</p>
+<p>Lately I made a mistake which I thought to be pretty prevalent among JavaScript beginners. More importantly, it revealed a subtle cross-browser JavaScript inconsistency regarding function declarations. I hope this article can clarify things a bit.<!--more--></p>
 <h2 id="the-inception">The inception</h2>
 <p>To start with, it is pretty apparent that the code below will alert “false”. From <a href="http://stackoverflow.com/a/21680065">this stackoverflow answer</a> it is said that JavaScript checks for reference equality when encountering the “==” symbol. The two functions here, albeit does exactly the same thing, are different objects (i.e. residing at different memory locations), therefore the comparison result will be unequal.</p>
 <div class="sourceCode"><pre class="sourceCode javascript"><code class="sourceCode javascript"><span class="kw">function</span> <span class="at">foo</span>() <span class="op">{</span>
